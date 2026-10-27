@@ -1266,13 +1266,13 @@ class PowerRankingHandler(BaseHTTPRequestHandler):
             self.serve_static_file("index.html")
             return
 
-        if path in {"/app.js", "/style.css"}:
+        if path in {
+            "/app.js",
+            "/style.css",
+            "/favicon.svg",
+            "/favicon.ico",
+        }:
             self.serve_static_file(path.lstrip("/"))
-            return
-
-        if path == "/favicon.ico":
-            self.send_response(HTTPStatus.NO_CONTENT)
-            self.end_headers()
             return
 
         self.send_error_json(
@@ -1284,6 +1284,8 @@ class PowerRankingHandler(BaseHTTPRequestHandler):
             "index.html": "text/html; charset=utf-8",
             "app.js": "application/javascript; charset=utf-8",
             "style.css": "text/css; charset=utf-8",
+            "favicon.svg": "image/svg+xml",
+            "favicon.ico": "image/x-icon",
         }
 
         if filename not in allowed_files:
