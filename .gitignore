@@ -1,5 +1,7 @@
 __pycache__/
 *.py[cod]
 data.json
+drink_data.json
+data/
 data.tmp
 temp.txt

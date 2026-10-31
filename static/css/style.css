@@ -7,17 +7,17 @@
 :root {
     color-scheme: dark;
 
-    --bg: #0b1020;
-    --panel: #131b2e;
-    --panel-alt: #18233a;
+    --bg: #f2d8b3;
+    --panel: #143a52;
+    --panel-alt: #194560;
 
-    --line: #2a3855;
-    --text: #edf3ff;
-    --muted: #9eacc7;
+    --line: #2f6485;
+    --text: #fbebd2;
+    --muted: #8fb0a9;
 
-    --accent: #7c9cff;
-    --danger: #ff747e;
-    --success: #66d9a6;
+    --accent: #fbd266;
+    --danger: #d76735;
+    --success: #55d4db;
 
     font-family:
         system-ui,
@@ -57,7 +57,7 @@ body {
     background:
         radial-gradient(
             ellipse at 50% 0%,
-            #172545 0%,
+            #fbebd2 0%,
             transparent 58%
         ),
         var(--bg);
@@ -97,8 +97,8 @@ textarea:disabled {
 }
 
 ::selection {
-    color: #071126;
-    background: #a9bbff;
+    color: #0a2433;
+    background: #fbd266;
 }
 
 /* Fallback when JavaScript is disabled */
