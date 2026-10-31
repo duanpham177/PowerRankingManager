@@ -161,7 +161,13 @@
             <p class="muted small">Prices are entered in thousands of đồng (example: 25 = 25.000 ₫).</p>
           </div>
           ${shop && canManage ? `
-            <button type="button" data-action="add-drink-menu-item">Add menu item</button>
+            <div class="form-actions">
+              <button type="button" data-action="add-drink-menu-item">Add menu item</button>
+              <button type="button" data-action="export-drink-menu">Export menu</button>
+              <button type="button" data-action="import-drink-menu">Import menu</button>
+              <input id="drink-menu-import-file" type="file" accept=".json,application/json"
+                hidden aria-label="Choose a drink menu JSON file">
+            </div>
           ` : ""}
         </div>
         ${shops.length ? `
@@ -1094,6 +1100,141 @@
         prices
       };
     });
+  }
+
+  function exportDrinkMenu() {
+    const shop = state.drink_shop.shops.find(item => item.id === activeDrinkShopId);
+    if (!shop) throw new Error("Select a shop before exporting its menu.");
+
+    const exportData = {
+      format: "power-ranking-drink-menu",
+      version: 1,
+      shop_name: shop.name,
+      items: shop.menu.map(({ name, category, prices }) => ({
+        name,
+        category,
+        prices: { S: prices.S, M: prices.M, L: prices.L }
+      }))
+    };
+    const blob = new Blob(
+      [`${JSON.stringify(exportData, null, 2)}\n`],
+      { type: "application/json;charset=utf-8" }
+    );
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    const filename = shop.name
+      .normalize("NFKD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-zA-Z0-9_-]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .toLowerCase() || "drink-menu";
+    link.href = url;
+    link.download = `${filename}-menu.json`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 0);
+  }
+
+  async function importDrinkMenuFile(input) {
+    const file = input.files?.[0];
+    if (!file) return;
+
+    try {
+      if (file.size > 1024 * 1024) {
+        throw new Error("Menu file must be 1 MB or smaller.");
+      }
+
+      let data;
+      try {
+        data = JSON.parse(await file.text());
+      } catch {
+        throw new Error("The selected file is not valid JSON.");
+      }
+      if (
+        !data || typeof data !== "object"
+        || data.format !== "power-ranking-drink-menu"
+        || data.version !== 1
+        || !Array.isArray(data.items)
+        || data.items.length > 500
+      ) {
+        throw new Error("This is not a supported drink menu export file.");
+      }
+
+      const importedItems = [];
+      const importedKeys = new Set();
+      for (const [index, item] of data.items.entries()) {
+        if (
+          !item || typeof item !== "object"
+          || typeof item.name !== "string"
+          || !item.name.trim()
+          || item.name.trim().length > 120
+          || !["drink", "topping"].includes(item.category)
+          || !item.prices || typeof item.prices !== "object"
+          || Array.isArray(item.prices)
+        ) {
+          throw new Error(`Menu item ${index + 1} has invalid name, type, or prices.`);
+        }
+
+        const prices = {};
+        for (const size of ["S", "M", "L"]) {
+          const price = item.prices[size] ?? null;
+          if (price !== null && (!Number.isInteger(price) || price < 0 || price > 1000000)) {
+            throw new Error(`Menu item ${index + 1} has an invalid ${size} price.`);
+          }
+          prices[size] = price;
+        }
+        if (Object.values(prices).every(price => price === null)) {
+          throw new Error(`Menu item ${index + 1} needs at least one price.`);
+        }
+
+        const key = `${item.category}:${item.name.trim().toLocaleLowerCase()}`;
+        if (importedKeys.has(key)) {
+          throw new Error(`The imported menu contains a duplicate item: ${item.name.trim()}.`);
+        }
+        importedKeys.add(key);
+        importedItems.push({
+          name: item.name.trim(),
+          category: item.category,
+          prices
+        });
+      }
+
+      const existingMenu = $("#drink-menu-form")
+        ? readDrinkMenuForm()
+        : [...drinkMenuDraft];
+      const mergedMenu = [...existingMenu];
+      let updatedCount = 0;
+      let addedCount = 0;
+      for (const importedItem of importedItems) {
+        const existingItem = mergedMenu.find(item => (
+          item.category === importedItem.category
+          && item.name.trim().toLocaleLowerCase()
+            === importedItem.name.toLocaleLowerCase()
+        ));
+        if (existingItem) {
+          existingItem.name = importedItem.name;
+          existingItem.prices = importedItem.prices;
+          updatedCount += 1;
+        } else {
+          mergedMenu.push({ ...blankDrinkMenuItem(importedItem.category), ...importedItem });
+          addedCount += 1;
+        }
+      }
+      if (mergedMenu.length > 500) {
+        throw new Error("A shop cannot contain more than 500 menu items.");
+      }
+
+      drinkMenuDraft = mergedMenu;
+      showNotice(
+        `Menu imported: ${addedCount} added, ${updatedCount} updated. Review and save the menu.`
+      );
+      renderApp();
+    } catch (error) {
+      showNotice(error.message, "error");
+    } finally {
+      input.value = "";
+    }
   }
 
   async function saveDrinkShop(

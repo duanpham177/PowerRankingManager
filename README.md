@@ -107,6 +107,8 @@ Viewer có thể xem mục này nhưng không thể gửi kết quả.
 
 Admin và Operator có thể tạo nhiều quán, nhập menu theo từng quán, thêm topping, ghi đơn và quản lý đơn. Giá đồ uống, topping, phí và giảm giá nhập theo nghìn đồng; ví dụ `25` tương ứng `25.000 ₫`. Viewer chỉ xem menu và tổng đơn.
 
+Để chuyển menu sang máy khác, chọn quán rồi dùng **Export menu** để tải tệp JSON. Trên máy nhận, tạo hoặc chọn quán rồi chọn **Import menu** và mở tệp đó. Tệp chỉ chứa tên quán và danh sách món, loại, giá; không chứa đơn hàng hay tên người đặt. Món trùng tên và loại sẽ được cập nhật giá, món mới sẽ được thêm, còn món chỉ có trên máy nhận vẫn được giữ lại. Sau khi nhập, kiểm tra danh sách và chọn **Save menu** để lưu.
+
 Trong **Bill settlement**, chọn team (1–4 team) hoặc **Individual orders** cho từng người có đơn. Mọi người đặt phải được phân vào đúng một nhóm. Thành viên không có đơn vẫn có thể tham gia team và chia phần chi phí chung. Tỷ lệ các team phải không âm và tổng bằng 100%.
 
 Ứng dụng phân bổ hóa đơn cuối theo tỷ lệ giữa tổng bill sau phí/giảm giá và tổng giá món gốc. Chi phí team được chia theo tỷ lệ team; phần chi phí chung chia đều cho mọi thành viên, kể cả người không đặt. Phép phân bổ dùng đồng nguyên và phương pháp phần dư lớn nhất để đối soát tổng; số tiền cuối mỗi người được làm tròn đến 1.000 ₫ gần nhất (500 ₫ làm tròn lên). Vì làm tròn từng người, tổng phải thu sau làm tròn có thể khác tổng hóa đơn; màn hình hiển thị phần chênh lệch.

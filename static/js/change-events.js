@@ -1,7 +1,10 @@
 "use strict";
 
   async function onChange(event) {
-    if (event.target.id === "theme-select") {
+    if (event.target.id === "drink-menu-import-file") {
+      await importDrinkMenuFile(event.target);
+
+    } else if (event.target.id === "theme-select") {
       setTheme(event.target.value);
 
     } else if (event.target.id === "settlement-team-count") {

@@ -146,6 +146,13 @@
         drinkMenuDraft.push(blankDrinkMenuItem());
         renderApp();
 
+      } else if (action === "export-drink-menu") {
+        exportDrinkMenu();
+        showNotice("Saved menu exported. Orders and personal data are not included.");
+
+      } else if (action === "import-drink-menu") {
+        $("#drink-menu-import-file")?.click();
+
       } else if (action === "remove-drink-menu-item") {
         const menu = readDrinkMenuForm();
         const itemId = button.dataset.menuItemId;
