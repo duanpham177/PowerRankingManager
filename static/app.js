@@ -58,6 +58,9 @@
       --surface-shadow-dark: #081f2d;
       --inset-shadow-dark: #081f2d;
       --inset-shadow-light: #24536c;
+      --modal-surface: #19435d;
+      --modal-border: #3d7697;
+      --modal-shadow: #000a;
     }
 
     :root[data-theme="midnight"] {
@@ -89,6 +92,9 @@
       --surface-shadow-dark: #100d1c;
       --inset-shadow-dark: #100d1c;
       --inset-shadow-light: #423955;
+      --modal-surface: #302a41;
+      --modal-border: #615476;
+      --modal-shadow: #000b;
     }
 
     :root[data-theme="light"] {
@@ -121,6 +127,9 @@
       --surface-shadow-dark: #c4c6d2;
       --inset-shadow-dark: #c4c6d2;
       --inset-shadow-light: #ffffff;
+      --modal-surface: #eff0f7;
+      --modal-border: #c1c4d2;
+      --modal-shadow: #777b9170;
       --notice: #e7e8f0;
       --notice-error: #eee5e9;
       --notice-success: #e4e9e8;
@@ -1443,6 +1452,19 @@
     :root[data-theme] button:disabled {
       box-shadow: none;
       transform: none;
+    }
+
+    :root[data-theme] .edit-modal {
+      border: 1px solid var(--modal-border);
+      background: var(--modal-surface);
+      box-shadow:
+        0 25px 65px var(--modal-shadow),
+        inset 0 1px 0 var(--surface-shadow-light);
+    }
+
+    :root[data-theme] .edit-modal input:not([type="checkbox"]):not([type="radio"]),
+    :root[data-theme] .edit-modal select {
+      border-color: var(--modal-border);
     }
 
     :root[data-theme] .export-filename-control button {
