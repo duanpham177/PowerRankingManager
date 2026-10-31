@@ -10,7 +10,7 @@
 - **Drink orders:** quản lý nhiều quán, menu, topping, đơn nước và chia hóa đơn theo người hoặc team.
 - **Match history:** xem lịch sử trận, nhật ký thay đổi thứ hạng; Admin có thể ẩn hoặc xóa lịch sử và quản lý nhật ký.
 - **Manage players / users:** Admin quản lý người chơi, tài khoản, vai trò và quyền truy cập.
-- **Giao diện:** chọn theme Ocean, Midnight hoặc Light; lựa chọn được lưu trong trình duyệt.
+- **Giao diện:** chọn theme Ocean, Midnight hoặc Light; cả ba dùng bề mặt neumorphic với bảng màu riêng. Lựa chọn được lưu trong trình duyệt.
 
 ## Yêu cầu
 

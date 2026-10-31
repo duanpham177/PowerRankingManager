@@ -54,6 +54,10 @@
       --notice-error: #4a2a1c;
       --notice-success: #12474d;
       --first-place: #4a4a2a;
+      --surface-shadow-light: #24536c;
+      --surface-shadow-dark: #081f2d;
+      --inset-shadow-dark: #081f2d;
+      --inset-shadow-light: #24536c;
     }
 
     :root[data-theme="midnight"] {
@@ -81,38 +85,46 @@
       --notice-error: #4a2937;
       --notice-success: #21443e;
       --first-place: #51442f;
+      --surface-shadow-light: #423955;
+      --surface-shadow-dark: #100d1c;
+      --inset-shadow-dark: #100d1c;
+      --inset-shadow-light: #423955;
     }
 
     :root[data-theme="light"] {
       color-scheme: light;
-      --bg: #f4f7fb;
-      --bg-glow: #e4edf8;
-      --panel: #ffffff;
-      --panel-a: #ffffff;
-      --panel-b: #f8fafd;
-      --line: #d6dfeb;
-      --text: #1d2b3a;
-      --muted: #596b7d;
-      --page-muted: #647588;
-      --accent: #2563eb;
+      --bg: #e7e8f0;
+      --bg-glow: #e7e8f0;
+      --panel: #e7e8f0;
+      --panel-a: #eaebf3;
+      --panel-b: #e4e5ed;
+      --line: #d3d5e0;
+      --text: #34364a;
+      --muted: #62667a;
+      --page-muted: #62667a;
+      --accent: #5549c9;
       --on-accent: #ffffff;
-      --accent-2: #0f9f8f;
-      --sea: #e5edf8;
-      --sea-light: #9aacc2;
-      --danger: #c2413b;
-      --danger-bg: #fff0ef;
-      --field: #ffffff;
-      --card: #f1f5fa;
-      --menu: #ffffff;
-      --th: #edf2f8;
-      --hover: #1d2b3a0d;
-      --hover-weak: #1d2b3a08;
+      --accent-2: #8d86d7;
+      --sea: #e7e8f0;
+      --sea-light: #d3d5e0;
+      --danger: #bd5064;
+      --danger-bg: #eee5e9;
+      --field: #e7e8f0;
+      --card: #e7e8f0;
+      --menu: #e7e8f0;
+      --th: #e2e3eb;
+      --hover: #5549c914;
+      --hover-weak: #5549c90a;
       --scrim: #172b4d66;
-      --shadow: #172b4d1f;
-      --notice: #eaf2ff;
-      --notice-error: #fff0ef;
-      --notice-success: #e8f7f3;
-      --first-place: #fff5d6;
+      --shadow: #b8bac8;
+      --surface-shadow-light: #ffffff;
+      --surface-shadow-dark: #c4c6d2;
+      --inset-shadow-dark: #c4c6d2;
+      --inset-shadow-light: #ffffff;
+      --notice: #e7e8f0;
+      --notice-error: #eee5e9;
+      --notice-success: #e4e9e8;
+      --first-place: #e4e1f4;
     }
 
     * { box-sizing: border-box; }
@@ -1127,46 +1139,33 @@
     }
 
     .export-filename-control {
-      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 10px;
     }
 
     .export-filename-control input {
-      padding-right: 52px;
+      min-width: 0;
+      flex: 1;
     }
 
     .export-filename-control button {
-      position: absolute;
-      top: 50%;
-      right: 5px;
+      flex: 0 0 44px;
       display: grid;
       place-items: center;
-      width: 34px;
-      min-width: 34px;
-      height: 34px;
+      width: 44px;
+      min-width: 44px;
+      height: 44px;
       padding: 0;
       border: 0;
-      border-radius: 4px;
+      border-radius: 50%;
       background: transparent;
       color: var(--text);
-      transform: translateY(-50%);
     }
 
     .export-filename-control button:hover {
       background: var(--hover);
       filter: none;
-    }
-
-    :root[data-theme="light"] .export-filename-control button img {
-      filter: none;
-      opacity: .7;
-    }
-
-    .export-filename-control button img {
-      display: block;
-      width: 16px;
-      height: 16px;
-      opacity: 1;
-      filter: brightness(0) invert(1);
     }
 
     .export-filename-control button:focus-visible {
@@ -1246,6 +1245,218 @@
       .streak-buttons { gap: 5px; }
       .streak-value { width: 54px; }
       .streak-buttons button { flex-basis: 34px; width: 34px; height: 36px; }
+    }
+
+    :root[data-theme="light"] body {
+      background: var(--bg);
+    }
+
+    :root[data-theme] .panel,
+    :root[data-theme] .sidebar,
+    :root[data-theme] .user-account-card,
+    :root[data-theme] .edit-modal,
+    :root[data-theme] .drink-bill-preview-dialog,
+    :root[data-theme] .rank-card,
+    :root[data-theme] .team-box,
+    :root[data-theme] .summary-rank,
+    :root[data-theme] .random-player,
+    :root[data-theme] .random-team,
+    :root[data-theme] .drink-shop-list-item,
+    :root[data-theme] .drink-settlement-team {
+      border-color: transparent;
+      background: var(--panel);
+      box-shadow:
+        7px 7px 16px var(--surface-shadow-dark),
+        -7px -7px 16px var(--surface-shadow-light);
+    }
+
+    :root[data-theme] button {
+      border-color: transparent;
+      border-radius: 999px;
+      background: var(--panel);
+      color: var(--text);
+      box-shadow:
+        4px 4px 8px var(--surface-shadow-dark),
+        -4px -4px 8px var(--surface-shadow-light);
+      transition: box-shadow .18s ease, transform .18s ease, background .18s ease;
+    }
+
+    :root[data-theme] button:hover {
+      filter: none;
+      transform: translateY(-1px);
+    }
+
+    :root[data-theme] button:active {
+      transform: translateY(0);
+      box-shadow:
+        inset 3px 3px 6px var(--inset-shadow-dark),
+        inset -3px -3px 6px var(--inset-shadow-light);
+    }
+
+    :root[data-theme] button.primary,
+    :root[data-theme] .tabs button.active,
+    :root[data-theme] .sidebar .tabs button.active {
+      border-color: transparent;
+      background: var(--accent);
+      color: var(--on-accent);
+      box-shadow:
+        4px 4px 9px var(--surface-shadow-dark),
+        -4px -4px 9px var(--surface-shadow-light);
+    }
+
+    :root[data-theme] button.danger {
+      border-color: transparent;
+      background: var(--danger-bg);
+      color: var(--danger);
+    }
+
+    :root[data-theme] input:not([type="checkbox"]):not([type="radio"]),
+    :root[data-theme] select,
+    :root[data-theme] textarea,
+    :root[data-theme] .drink-settlement-team textarea,
+    :root[data-theme] #drink-settlement-form textarea {
+      border-color: transparent;
+      background: var(--panel);
+      color: var(--text);
+      box-shadow:
+        inset 4px 4px 8px var(--inset-shadow-dark),
+        inset -4px -4px 8px var(--inset-shadow-light);
+    }
+
+    :root[data-theme] input:focus,
+    :root[data-theme] select:focus,
+    :root[data-theme] textarea:focus {
+      border-color: var(--accent);
+      box-shadow:
+        inset 3px 3px 6px var(--inset-shadow-dark),
+        inset -3px -3px 6px var(--inset-shadow-light),
+        0 0 0 2px var(--hover);
+    }
+
+    :root[data-theme] .tabs button,
+    :root[data-theme] .sidebar .tabs button {
+      border-color: transparent;
+      background: var(--panel);
+      color: var(--muted);
+      box-shadow:
+        3px 3px 7px var(--surface-shadow-dark),
+        -3px -3px 7px var(--surface-shadow-light);
+    }
+
+    :root[data-theme] .sidebar .tabs button:hover {
+      background: var(--panel);
+      box-shadow:
+        inset 2px 2px 4px var(--inset-shadow-dark),
+        inset -2px -2px 4px var(--inset-shadow-light);
+    }
+
+    :root[data-theme] .sidebar .tabs button.active {
+      color: var(--on-accent);
+      box-shadow:
+        3px 3px 8px var(--surface-shadow-dark),
+        -3px -3px 8px var(--surface-shadow-light);
+    }
+
+    :root[data-theme] .table-wrap {
+      border-color: transparent;
+      background: var(--panel);
+      box-shadow:
+        inset 3px 3px 7px var(--inset-shadow-dark),
+        inset -3px -3px 7px var(--inset-shadow-light);
+    }
+
+    :root[data-theme] th {
+      background: var(--th);
+      color: var(--muted);
+    }
+
+    :root[data-theme] th,
+    :root[data-theme] td,
+    :root[data-theme] .player-rank-row,
+    :root[data-theme] .sidebar-account {
+      border-color: var(--line);
+    }
+
+    :root[data-theme] .user-account-flag,
+    :root[data-theme] .user-account-status,
+    :root[data-theme] .badge,
+    :root[data-theme] .tier,
+    :root[data-theme] .summary-player {
+      background: var(--card);
+      color: var(--text);
+      box-shadow:
+        2px 2px 5px var(--surface-shadow-dark),
+        -2px -2px 5px var(--surface-shadow-light);
+    }
+
+    :root[data-theme] .user-account-status.active::before {
+      box-shadow: 0 0 0 2px #22c55e24, 0 0 8px #22c55e70;
+    }
+
+    :root[data-theme] .user-action-menu .user-actions {
+      border-color: transparent;
+      background: var(--panel);
+      box-shadow:
+        7px 7px 16px var(--surface-shadow-dark),
+        -7px -7px 16px var(--surface-shadow-light);
+    }
+
+    :root[data-theme] .drink-settlement-picker-options {
+      border-color: transparent;
+      background: var(--panel);
+      box-shadow:
+        7px 7px 16px var(--surface-shadow-dark),
+        -7px -7px 16px var(--surface-shadow-light);
+    }
+
+    :root[data-theme] .drink-settlement-picker-options button:hover {
+      background: var(--hover);
+      color: var(--text);
+    }
+
+    :root[data-theme] .notice {
+      border-color: transparent;
+      background: var(--panel);
+      box-shadow:
+        7px 7px 16px var(--surface-shadow-dark),
+        -7px -7px 16px var(--surface-shadow-light);
+    }
+
+    :root[data-theme] .notice.error { background: var(--notice-error); }
+    :root[data-theme] .notice.success { background: var(--notice-success); }
+
+    :root[data-theme] .summary-rank.first-place {
+      background: linear-gradient(145deg, var(--first-place), var(--panel));
+    }
+
+    :root[data-theme] .password-toggle {
+      border-radius: 7px;
+      background: transparent;
+      box-shadow: none;
+    }
+
+    :root[data-theme] .password-toggle:hover {
+      background: var(--hover);
+      transform: translateY(-50%);
+    }
+
+    :root[data-theme] button:disabled {
+      box-shadow: none;
+      transform: none;
+    }
+
+    :root[data-theme] .export-filename-control button {
+      background: var(--panel);
+      box-shadow:
+        3px 3px 6px var(--surface-shadow-dark),
+        -3px -3px 6px var(--surface-shadow-light);
+    }
+
+    :root[data-theme] .export-filename-control button:hover {
+      background: var(--panel);
+      box-shadow:
+        inset 2px 2px 4px var(--inset-shadow-dark),
+        inset -2px -2px 4px var(--inset-shadow-light);
     }
   `;
 
