@@ -224,7 +224,12 @@
         renderApp();
 
       } else if (form.id === "drink-menu-form") {
-        const menu = readDrinkMenuForm();
+        const menu = readDrinkMenuForm().filter(item => (
+          item.name || Object.values(item.prices).some(price => price !== null)
+        ));
+        if (menu.some(item => !item.name)) {
+          throw new Error("Enter a name for each menu item with a price.");
+        }
         await saveDrinkShop(drinkShopsWithMenu(menu));
         drinkSettlementResults.delete(activeDrinkShopId);
         showNotice("Drink menu saved.");

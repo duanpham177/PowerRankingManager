@@ -180,7 +180,7 @@
               <tbody>
                 ${drinkMenuDraft.map(item => `
                   <tr data-menu-item-id="${escapeHtml(item.id)}">
-                    <td><input name="menu-name" maxlength="120" required ${canManage ? "" : "disabled"}
+                    <td><input name="menu-name" maxlength="120" ${canManage ? "" : "disabled"}
                       value="${escapeHtml(item.name)}" aria-label="Menu item name"></td>
                     <td>
                       <select name="menu-category" aria-label="Menu item type" ${canManage ? "" : "disabled"}>
