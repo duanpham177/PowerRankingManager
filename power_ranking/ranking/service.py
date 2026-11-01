@@ -269,12 +269,11 @@ def apply_match_record(players, record, log_events=None):
             player["play_streak"] = 0
             player["off_streak"] += 1
 
-            if player["off_streak"] >= 2:
+            if player["off_streak"] % 2 == 0:
                 streak_adjustments[name] = -1
                 streak_reasons[name] = (
                     "Absent for 2 consecutive matches: -1 star"
                 )
-                player["off_streak"] = 0
 
             continue
 
@@ -293,10 +292,9 @@ def apply_match_record(players, record, log_events=None):
             adjustment += 1
             reasons.append("Won 3 consecutive matches: +1 star")
 
-        if player["play_streak"] >= 3:
+        if player["play_streak"] % 3 == 0:
             adjustment += 1
             reasons.append("Played 3 consecutive matches: +1 star")
-            player["play_streak"] = 0
 
         if adjustment:
             streak_adjustments[name] = adjustment
