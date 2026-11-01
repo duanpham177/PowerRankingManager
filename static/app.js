@@ -22,6 +22,7 @@
   const drinkSettlementDrafts = new Map();
   const drinkSettlementResults = new Map();
   let openSettlementPicker = null;
+  let newSettlementChip = null;
 
   const css = `
     :root {
@@ -1580,6 +1581,12 @@
     }
 
     activeTheme = theme;
+    const root = document.documentElement;
+    if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      root.classList.add("theme-transition");
+      clearTimeout(window.__themeTransitionTimer);
+      window.__themeTransitionTimer = setTimeout(() => root.classList.remove("theme-transition"), 650);
+    }
     document.documentElement.dataset.theme = theme;
 
     try {

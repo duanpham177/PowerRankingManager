@@ -234,7 +234,30 @@
         const name = String(formObject(form).shop_name || "").trim();
         if (!name) throw new Error("Enter a shop name.");
         const newShop = { id: drinkMenuId(), name, menu: [] };
-        await saveDrinkShop([...drinkShopsForSave(), newShop]);
+        const shopButton = form.querySelector("button[type='submit']");
+        shopButton?.classList.add("is-saving");
+        if (shopButton) shopButton.disabled = true;
+        try {
+          await saveDrinkShop([...drinkShopsForSave(), newShop]);
+        } catch (error) {
+          shopButton?.classList.remove("is-saving");
+          if (shopButton) shopButton.disabled = false;
+          throw error;
+        }
+        if (shopButton) {
+          shopButton.classList.remove("is-saving");
+          shopButton.classList.add("is-saved");
+          shopButton.textContent = "Added ✓";
+          shopButton.style.setProperty("background", "linear-gradient(145deg, #2fbf80, #1c9a62)", "important");
+          shopButton.style.setProperty("color", "#fff", "important");
+          shopButton.style.setProperty("opacity", "1", "important");
+          shopButton.animate([
+            { transform: "scale(.94)", boxShadow: "0 0 0 0 rgba(47,191,128,.6)" },
+            { transform: "scale(1.06)", boxShadow: "0 0 0 10px rgba(47,191,128,.25)", offset: .5 },
+            { transform: "scale(1)", boxShadow: "0 0 0 22px rgba(47,191,128,0)" }
+          ], { duration: 900, easing: "ease-out" });
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
         activeDrinkShopId = newShop.id;
         confirmDeleteShopId = null;
         openDrinkShopMenuId = null;
@@ -281,8 +304,24 @@
             + "Delete those orders first."
           );
         }
-        await saveDrinkShop(drinkShopsWithMenu(menu));
+        const saveMenuButton = form.querySelector("button[type='submit']");
+        saveMenuButton?.classList.remove("needs-save");
+        saveMenuButton?.classList.add("is-saving");
+        if (saveMenuButton) saveMenuButton.disabled = true;
+        try {
+          await saveDrinkShop(drinkShopsWithMenu(menu));
+        } catch (error) {
+          saveMenuButton?.classList.remove("is-saving");
+          if (saveMenuButton) saveMenuButton.disabled = false;
+          throw error;
+        }
         drinkSettlementResults.delete(activeDrinkShopId);
+        if (saveMenuButton) {
+          saveMenuButton.classList.remove("is-saving");
+          saveMenuButton.classList.add("is-saved");
+          saveMenuButton.textContent = "Saved ✓";
+          await new Promise(resolve => setTimeout(resolve, 900));
+        }
         showNotice("Drink menu saved.");
         renderApp();
 
@@ -290,8 +329,38 @@
         const draft = readDrinkSettlementDraft(form);
         drinkSettlementDrafts.set(form.dataset.shopId, draft);
         const result = calculateDrinkSettlement(form.dataset.shopId, draft);
+        const calcButton = form.querySelector("button[type='submit']");
+        if (calcButton) {
+          calcButton.classList.add("is-saving");
+          calcButton.disabled = true;
+          await new Promise(resolve => setTimeout(resolve, 450));
+          calcButton.classList.remove("is-saving");
+          calcButton.classList.add("is-saved");
+          calcButton.textContent = "Calculated ✓";
+          await new Promise(resolve => setTimeout(resolve, 550));
+        }
         drinkSettlementResults.set(form.dataset.shopId, result);
         renderApp();
+        const resultEl = $("#drink-settlement-result");
+        if (resultEl) {
+          resultEl.classList.add("result-enter");
+          const targetY = Math.max(0, resultEl.getBoundingClientRect().top + window.scrollY - 16);
+          const startY = window.scrollY;
+          const dist = targetY - startY;
+          if (Math.abs(dist) > 4) {
+            const root = document.documentElement;
+            const duration = Math.min(1200, Math.max(600, Math.abs(dist) * 0.8));
+            const t0 = performance.now();
+            root.style.scrollBehavior = "auto";
+            const step = now => {
+              const p = Math.min((now - t0) / duration, 1);
+              const eased = -(Math.cos(Math.PI * p) - 1) / 2;
+              window.scrollTo(0, startY + dist * eased);
+              if (p < 1) requestAnimationFrame(step); else root.style.scrollBehavior = "";
+            };
+            requestAnimationFrame(step);
+          }
+        }
 
       } else if (form.id === "drink-order-form") {
         if (!roleIs("Admin", "Operator")) {
@@ -316,14 +385,43 @@
           topping_ids: toppingIds
         };
         const orders = [...state.drink_shop.orders, order];
-        await saveDrinkShop(
-          drinkShopsForSave(),
-          orders,
-          state.drink_shop.next_order_id + 1
-        );
+        const addButton = form.querySelector("button[type='submit']");
+        addButton?.classList.remove("needs-save");
+        addButton?.classList.add("is-saving");
+        if (addButton) addButton.disabled = true;
+        try {
+          await saveDrinkShop(
+            drinkShopsForSave(),
+            orders,
+            state.drink_shop.next_order_id + 1
+          );
+        } catch (error) {
+          addButton?.classList.remove("is-saving");
+          if (addButton) addButton.disabled = false;
+          throw error;
+        }
         drinkSettlementResults.delete(activeDrinkShopId);
+        if (addButton) {
+          addButton.classList.remove("is-saving");
+          addButton.classList.add("is-saved");
+          addButton.textContent = "Added ✓";
+          addButton.style.setProperty("background", "linear-gradient(145deg, #2fbf80, #1c9a62)", "important");
+          addButton.style.setProperty("color", "#fff", "important");
+          addButton.style.setProperty("opacity", "1", "important");
+          addButton.animate([
+            { transform: "scale(.94)", boxShadow: "0 0 0 0 rgba(47,191,128,.6)" },
+            { transform: "scale(1.06)", boxShadow: "0 0 0 10px rgba(47,191,128,.25)", offset: .5 },
+            { transform: "scale(1)", boxShadow: "0 0 0 22px rgba(47,191,128,0)" }
+          ], { duration: 900, easing: "ease-out" });
+          await new Promise(resolve => setTimeout(resolve, 1100));
+        }
         showNotice("Drink order added.");
         renderApp();
+        const newRow = document.querySelector(`[data-order-id="${order.id}"]`);
+        if (newRow) {
+          newRow.classList.add("row-added");
+          newRow.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        }
 
       }
     } catch (error) {

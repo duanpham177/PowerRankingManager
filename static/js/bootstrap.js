@@ -7,6 +7,18 @@
     document.addEventListener("submit", onSubmit);
     document.addEventListener("reset", onReset);
     document.addEventListener("click", onClick);
+    document.addEventListener("mouseout", event => {
+      const picker = event.target.closest?.(".drink-settlement-picker.is-open");
+      if (!picker || picker.contains(event.relatedTarget)) return;
+      clearTimeout(picker._closeTimer);
+      picker._closeTimer = setTimeout(() => {
+        if (picker.matches(":hover")) return;
+        if (openSettlementPicker) openSettlementPicker = null;
+        picker.classList.remove("is-open");
+        picker.querySelector(".drink-settlement-picker-toggle")
+          ?.setAttribute("aria-expanded", "false");
+      }, 250);
+    });
     document.addEventListener("change", onChange);
     document.addEventListener("input", onInput);
     document.addEventListener("keydown", onKeyDown);

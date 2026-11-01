@@ -68,7 +68,7 @@
       );
 
       return `
-        <tr>
+        <tr data-order-id="${order.id}">
           <td>${escapeHtml(order.person)}</td>
           <td>${escapeHtml(orderShop.name)}</td>
           <td>${escapeHtml(drink.name)} (${order.size})</td>
@@ -189,7 +189,7 @@
                       <select name="menu-category" aria-label="Menu item type" ${canManage ? "" : "disabled"}>
                         <option value="drink" ${item.category === "drink" ? "selected" : ""}>Drink</option>
                         <option value="topping" ${item.category === "topping" ? "selected" : ""}>Topping</option>
-                        <option value="food" ${item.category === "food" ? "selected" : ""}>Foods</option>
+                        <option value="food" ${item.category === "food" ? "selected" : ""}>Food</option>
                       </select>
                     </td>
                     ${["S", "M", "L"].map(size => `
@@ -364,7 +364,7 @@
     );
     const assignedPeopleList = (names, assignment) => names.length
       ? names.map(name => `
-        <div class="drink-settlement-assigned-person"
+        <div class="drink-settlement-assigned-person${newSettlementChip && newSettlementChip.assignment === assignment && newSettlementChip.person === name ? " chip-new" : ""}"
           data-settlement-assignment="${escapeHtml(assignment)}"
           data-person="${escapeHtml(name)}">
           <span>${escapeHtml(name)}</span>
@@ -466,13 +466,24 @@
             </fieldset>
           `).join("")}
         </div>
-        <div class="field">
-          <label>People ordering separately</label>
-          ${assignmentPicker("standalone")}
-          <div class="drink-settlement-assigned-list">
-            ${assignedPeopleList(draft.standaloneOrderedPeople, "standalone")}
+        <section class="drink-standalone-card">
+          <div class="drink-standalone-head">
+            <span class="team-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4Zm0 2c-3.300 0-8 1.700-8 5v1h16v-1c0-3.300-4.700-5-8-5Z"/></svg>
+            </span>
+            <div>
+              <strong>People ordering separately</strong>
+              <span class="muted small">Pay for their own orders, outside any team.</span>
+            </div>
+            <span class="drink-standalone-count">${draft.standaloneOrderedPeople.length}</span>
           </div>
-        </div>
+          <div class="drink-standalone-body">
+            ${assignmentPicker("standalone")}
+            <div class="drink-settlement-assigned-list">
+              ${assignedPeopleList(draft.standaloneOrderedPeople, "standalone")}
+            </div>
+          </div>
+        </section>
         <div class="form-actions">
           <button type="submit" class="primary">Calculate bill</button>
         </div>
@@ -487,56 +498,47 @@
     return `
       <div class="drink-settlement-result" id="drink-settlement-result">
         <div>
-          <div class="toolbar">
-            <h3>Consolidated final bill · ${escapeHtml(result.shopName)}</h3>
-            <button type="button" data-action="preview-drink-bill"
+          <div class="bill-hero">
+            <div class="bill-hero-main">
+              <span class="bill-hero-eyebrow">Consolidated final bill</span>
+              <h3>${escapeHtml(result.shopName)}</h3>
+              <div class="bill-hero-total">
+                <span>Total after fees and discount</span>
+                <strong>${formatVnd(result.finalBill)}</strong>
+              </div>
+            </div>
+            <button type="button" class="primary" data-action="preview-drink-bill"
               data-shop-id="${escapeHtml(result.shopId)}">Preview bill</button>
           </div>
-          <p class="drink-settlement-final-total">
-            Total after fees and discount: <strong>${formatVnd(result.finalBill)}</strong>
-          </p>
-          <div class="table-wrap">
-          <table class="drink-settlement-breakdown">
-            <thead>
-              <tr><th>Group</th><th>Person</th><th>Shop</th><th>Products</th><th>Qty</th>
-                <th>Original products</th><th>Allocated products</th><th>Equal share</th>
-                <th>Calculated bill</th><th>Payable (rounded to 1,000 ₫)</th></tr>
-            </thead>
-            <tbody>
-              ${result.privatePeople.map(person => `
-                <tr>
-                  <td>Individual order</td>
-                  <td>${escapeHtml(person.name)}</td>
-                  <td>${person.quantity ? escapeHtml(result.shopName) : "—"}</td>
-                  <td>${person.products.map(product => escapeHtml(product)).join("<br>")}</td>
-                  <td>${person.quantity}</td>
-                  <td>${formatVnd(person.originalTotal)}</td>
-                  <td>${formatVnd(person.productCost)}</td>
-                  <td>${formatVnd(0)}</td>
-                  <td>${formatVnd(person.total)}</td>
-                  <td>${formatVnd(person.roundedTotal)}</td>
-                </tr>
-              `).join("")}
-              ${result.teams.map(team => team.people.map(person => `
-                <tr>
-                  <td>Team ${team.index + 1}</td>
-                  <td>${escapeHtml(person.name)}</td>
-                  <td>${person.quantity ? escapeHtml(result.shopName) : "—"}</td>
-                  <td>${person.products.map(product => escapeHtml(product)).join("<br>")}</td>
-                  <td>${person.quantity}</td>
-                  <td>${formatVnd(person.originalTotal)}</td>
-                  <td>${formatVnd(person.productCost)}</td>
-                  <td>${formatVnd(person.sharedCost)}</td>
-                  <td>${formatVnd(person.total)}</td>
-                  <td>${formatVnd(person.roundedTotal)}</td>
-                </tr>
-              `).join("")).join("")}
-            </tbody>
-            <tfoot>
-              <tr><th colspan="8">Totals before rounding</th><th>${formatVnd(result.settledTotal)}</th><th></th></tr>
-              <tr><th colspan="9">Total payable after individual rounding</th><th>${formatVnd(result.roundedTotal)}</th></tr>
-            </tfoot>
-          </table>
+          <div class="bill-groups">
+            ${(() => {
+              const row = person => `
+                <div class="bill-row">
+                  <div class="bill-who">
+                    <strong>${escapeHtml(person.name)}</strong>
+                    <span class="bill-products">${person.products.length
+                      ? person.products.map(product => escapeHtml(product)).join(" · ")
+                      : "No order"}${person.quantity ? ` <em>×${person.quantity}</em>` : ""}</span>
+                  </div>
+                  <div class="bill-calc">
+                    <span><i>Original</i>${formatVnd(person.originalTotal)}</span>
+                    <span><i>Allocated</i>${formatVnd(person.productCost)}</span>
+                    <span><i>Equal share</i>${formatVnd(person.sharedCost || 0)}</span>
+                    <span><i>Calculated</i>${formatVnd(person.total)}</span>
+                  </div>
+                  <div class="bill-pay"><i>Payable</i><strong>${formatVnd(person.roundedTotal)}</strong></div>
+                </div>`;
+              const group = (title, people) => `
+                <section class="bill-group">
+                  <h4>${title}<span>${people.length}</span></h4>
+                  ${people.map(row).join("")}
+                </section>`;
+              return (result.privatePeople.length ? group("Individual order", result.privatePeople) : "")
+                + result.teams.map(team => group(`Team ${team.index + 1}`, team.people)).join("");
+            })()}
+            <div class="bill-totals">
+              <div class="bill-total-final"><span>Total payable after individual rounding</span><strong>${formatVnd(result.roundedTotal)}</strong></div>
+            </div>
           </div>
           <p class="muted small">
             Each person's product allocation is proportional to the final bill. Team remaining costs are shared
@@ -619,7 +621,9 @@
     }
     drinkSettlementDrafts.set(form.dataset.shopId, draft);
     drinkSettlementResults.delete(form.dataset.shopId);
+    newSettlementChip = { assignment, person };
     renderApp();
+    newSettlementChip = null;
   }
 
   function removeDrinkSettlementPerson(button) {

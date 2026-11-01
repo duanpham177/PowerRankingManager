@@ -143,6 +143,11 @@
         addDrinkSettlementPerson(button);
 
       } else if (action === "cancel-delete-drink-shop") {
+        const box = button.closest(".drink-shop-delete-confirm");
+        if (box) {
+          box.classList.add("closing");
+          await new Promise(resolve => setTimeout(resolve, 260));
+        }
         confirmDeleteShopId = null;
         renderApp();
 

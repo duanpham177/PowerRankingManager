@@ -118,7 +118,7 @@
           </div>
 
           <div class="table-wrap">
-            <table>
+            <table class="players-roster-table">
               <thead>
                 <tr>
                   <th><input type="checkbox" data-select-all-players aria-label="Select all players"></th>
