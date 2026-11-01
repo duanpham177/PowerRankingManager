@@ -714,10 +714,7 @@ tr.tier-1-row td:first-child { box-shadow: inset 4px 0 0 #f2b01e; }
   color: inherit !important; font-weight: 600; min-width: 0; height: auto; border-radius: 0; padding: 0;
 }
 
-.stars-cell { display: inline-grid; grid-template-columns: 5.4em auto; align-items: center; column-gap: 10px; }
 .stars-count { min-width: 22px; text-align: center; }
-
-.stars-cell { grid-template-columns: 3.6em auto; column-gap: 6px; }
 
 /* Settlement person picker: distinct from surrounding panels */
 :root .drink-settlement-picker-toggle {

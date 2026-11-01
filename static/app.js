@@ -1728,5 +1728,5 @@
     return `<span class="stars" title="${count} stars">${
       "★".repeat(Math.min(count, 5))
 
-    }${count > 5 ? ` +${count - 5}` : ""}${count === 0 ? "☆" : ""}</span>`;
+    }${count === 0 ? "☆" : ""}</span>`;
   }
