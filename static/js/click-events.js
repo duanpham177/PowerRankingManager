@@ -1,6 +1,27 @@
 "use strict";
 
   async function onClick(event) {
+    if (
+      openDrinkShopMenuId &&
+      !event.target.closest(".drink-shop-menu, .drink-shop-menu-toggle")
+    ) {
+      openDrinkShopMenuId = null;
+      const menuEl = $(".drink-shop-menu");
+      $$(".drink-shop-menu-toggle").forEach(toggle =>
+        toggle.setAttribute("aria-expanded", "false"));
+      if (menuEl) {
+        menuEl.classList.add("closing");
+        setTimeout(() => menuEl.remove(), 150);
+      }
+    }
+
+    const logSummary = event.target.closest("details.log-details > summary");
+    if (logSummary) {
+      event.preventDefault();
+      toggleLogDetails(logSummary.parentElement);
+      return;
+    }
+
     const userActionMenu = event.target.closest(".user-action-menu");
     if (!userActionMenu) {
       document.querySelectorAll(".user-action-menu[open]").forEach(menu => {
@@ -24,6 +45,13 @@
     if (tab) {
       activeTab = tab.dataset.tab;
       renderApp();
+      const main = $("#main-content");
+      if (main) {
+        main.classList.add("tab-enter");
+        main.addEventListener("animationend", () => {
+          main.classList.remove("tab-enter");
+        }, { once: true });
+      }
       return;
     }
 
@@ -108,6 +136,7 @@
         renderApp();
 
       } else if (action === "remove-settlement-person") {
+        await animateRemoval(button);
         removeDrinkSettlementPerson(button);
 
       } else if (action === "add-settlement-person") {
@@ -122,6 +151,7 @@
         if (confirmDeleteShopId !== shopId) {
           throw new Error("Shop deletion confirmation expired.");
         }
+        await animateRemoval(button);
         const shops = drinkShopsForSave().filter(
           shop => shop.id !== shopId
         );
@@ -145,6 +175,12 @@
         drinkMenuDraft = readDrinkMenuForm();
         drinkMenuDraft.push(blankDrinkMenuItem());
         renderApp();
+        const newRow = $$("#drink-menu-form tr[data-menu-item-id]").pop();
+        if (newRow) {
+          newRow.classList.add("row-added");
+          newRow.scrollIntoView({ behavior: "smooth", block: "center" });
+          $("[name='menu-name']", newRow)?.focus({ preventScroll: true });
+        }
 
       } else if (action === "export-drink-menu") {
         exportDrinkMenu();
@@ -160,9 +196,10 @@
           order => order.shop_id === activeDrinkShopId
             && (order.item_id === itemId || order.topping_ids.includes(itemId))
         );
-        if (affectedOrders.length && !confirm(
+        if (affectedOrders.length && !await appConfirm(
           `This menu item is used by ${affectedOrders.length} order(s). Remove it and those order items?`
         )) return;
+        await animateRemoval(button);
         drinkMenuDraft = menu.filter(item => item.id !== itemId);
         const orders = state.drink_shop.orders.filter(
           order => order.shop_id !== activeDrinkShopId
@@ -184,6 +221,7 @@
         if (orders.length === state.drink_shop.orders.length) {
           throw new Error("Drink order was not found.");
         }
+        await animateRemoval(button);
         await saveDrinkShop(drinkShopsForSave(), orders);
         drinkSettlementResults.delete(activeDrinkShopId);
         showNotice("Drink order removed.");
@@ -218,7 +256,7 @@
 
         randomTeamOption = result.option;
         previousRandomTeamSignature = result.signature;
-        renderRandomTeamOption(randomTeamOption);
+        renderRandomTeamOption(randomTeamOption, true);
         const generateButton = $("[data-action='generate-random-teams']");
         if (generateButton) generateButton.textContent = "Reroll teams";
         if (randomTeamOption.violation > 0) {
@@ -265,6 +303,13 @@
       } else if (action === "close-password") {
         $("#password-panel")?.remove();
 
+      } else if (action === "export-players") {
+        exportPlayers();
+        showNotice("Players exported.");
+
+      } else if (action === "import-players") {
+        $("#players-import-file")?.click();
+
       } else if (action === "delete-selected-players") {
         if (!roleIs("Admin")) {
           throw new Error("Only Admin can delete players.");
@@ -278,7 +323,7 @@
         }
 
         const playerList = names.map(playerName => `"${playerName}"`).join(", ");
-        if (!confirm(
+        if (!await appConfirm(
           `Remove ${names.length} selected player(s) from the active roster: ${playerList}? Match history and existing logs will remain unchanged.`
         )) {
           return;
@@ -298,12 +343,13 @@
           throw new Error("Only Admin can delete players.");
         }
 
-        if (!confirm(
+        if (!await appConfirm(
           `Remove "${name}" from the active roster? Existing match history and logs will be kept unchanged.`
         )) {
           return;
         }
 
+        await animateRemoval(button);
         await request("/admin/players/delete", {
           method: "POST",
           body: { name, confirm: true }
@@ -363,7 +409,7 @@
         $("#edit-player-backdrop")?.remove();
 
       } else if (action === "clear-history") {
-        if (!confirm(
+        if (!await appConfirm(
           "Hide all displayed match history? Source records and rankings will remain unchanged."
         )) {
           return;
@@ -384,12 +430,13 @@
           throw new Error("Invalid match ID.");
         }
 
-        if (!confirm(
+        if (!await appConfirm(
           `Permanently delete Match #${matchId}? Ranking and streaks will be rebuilt from the remaining matches, including saved manual player edits. Recent ranking-change logs will remain unchanged.`
         )) {
           return;
         }
 
+        await animateRemoval(button);
         await request("/admin/history/delete-match", {
           method: "POST",
           body: { match_id: matchId, confirm: true }
@@ -399,12 +446,13 @@
         await refreshState();
 
       } else if (action === "delete-all-history") {
-        if (!confirm(
+        if (!await appConfirm(
           "Permanently delete ALL source match records? Recent ranking-change logs will remain unchanged. This cannot be undone. Ranking and streaks will be rebuilt from initial player data and saved manual player edits."
         )) {
           return;
         }
 
+        await animateRemovalAll(".history-match");
         await request("/admin/history/delete-all", {
           method: "POST",
           body: { confirm: true }
@@ -423,12 +471,13 @@
         await refreshState();
 
       } else if (action === "clear-logs") {
-        if (!confirm(
+        if (!await appConfirm(
           "Clear recent ranking-change logs? Rankings and match history will remain unchanged."
         )) {
           return;
         }
 
+        await animateRemovalAll(".log-entry");
         await request("/admin/logs/clear", {
           method: "POST",
           body: { confirm: true }
@@ -458,8 +507,9 @@
         await refreshState();
 
       } else if (action === "delete-user") {
-        if (!confirm(`Permanently delete user ${name}?`)) return;
+        if (!await appConfirm(`Permanently delete user ${name}?`)) return;
 
+        await animateRemoval(button);
         await request("/admin/users/delete", {
           method: "POST",
           body: { username: name }
@@ -480,8 +530,9 @@
         await refreshState();
 
       } else if (action === "reset-password") {
-        const new_password = prompt(
-          `Enter a temporary password for ${name} (minimum 10 characters):`
+        const new_password = await appPrompt(
+          `Enter a temporary password for ${name} (minimum 10 characters):`,
+          { type: "password" }
         );
 
         if (new_password === null) return;
@@ -507,8 +558,98 @@
         await refreshState();
       }
     } catch (error) {
+      undoRemovalAnimations();
       showNotice(error.message, "error");
     }
+  }
+
+  let activeRemovalAnimations = [];
+
+  function undoRemovalAnimations() {
+    activeRemovalAnimations.forEach(animation => animation.cancel());
+    activeRemovalAnimations = [];
+  }
+
+  // Fades and collapses the row that owns the button; resolves when finished.
+  // The row stays hidden until the next render, or until an error undoes it.
+  async function animateRemoval(button) {
+    const row = button.closest(
+      "tr, .team-box, .user-account-card, .drink-settlement-assigned-person, li"
+    );
+    if (!row || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const height = row.offsetHeight;
+    const isTableRow = row.tagName === "TR";
+    const frames = isTableRow
+      ? [
+          { opacity: 1 },
+          { opacity: 0 }
+        ]
+      : [
+          { opacity: 1, height: `${height}px`, marginBottom: getComputedStyle(row).marginBottom },
+          { opacity: 0, height: "0px", marginBottom: "0px", paddingTop: "0px", paddingBottom: "0px" }
+        ];
+    row.style.overflow = "hidden";
+    const animation = row.animate(frames, {
+      duration: 280,
+      easing: "cubic-bezier(.4, 0, .2, 1)",
+      fill: "forwards"
+    });
+    activeRemovalAnimations.push(animation);
+    await animation.finished.catch(() => {});
+  }
+
+  async function animateRemovalAll(selector) {
+    const rows = $$(selector, $("#main-content") || document);
+    if (!rows.length || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const animations = rows.map((row, index) => {
+      const height = row.offsetHeight;
+      row.style.overflow = "hidden";
+      const animation = row.animate(
+        [
+          { opacity: 1, height: `${height}px`, marginBottom: getComputedStyle(row).marginBottom },
+          { opacity: 0, height: "0px", marginBottom: "0px", paddingTop: "0px", paddingBottom: "0px" }
+        ],
+        {
+          duration: 320,
+          delay: Math.min(index, 8) * 60,
+          easing: "cubic-bezier(.4, 0, .2, 1)",
+          fill: "both"
+        }
+      );
+      activeRemovalAnimations.push(animation);
+      return animation.finished.catch(() => {});
+    });
+    await Promise.all(animations);
+  }
+
+  function toggleLogDetails(details) {
+    const body = details.querySelector(".log-details-body");
+    if (!body || details.dataset.animating) {
+      details.open = !details.open;
+      return;
+    }
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const opening = !details.open;
+    if (reduceMotion) {
+      details.open = opening;
+      return;
+    }
+
+    details.dataset.animating = "true";
+    if (opening) details.open = true;
+    const height = body.scrollHeight;
+    const frames = [
+      { height: "0px", opacity: 0, overflow: "hidden" },
+      { height: `${height}px`, opacity: 1, overflow: "hidden" }
+    ];
+    const animation = body.animate(opening ? frames : frames.slice().reverse(), {
+      duration: 280,
+      easing: "ease-in-out"
+    });
+    animation.onfinish = () => {
+      if (!opening) details.open = false;
+      delete details.dataset.animating;
+    };
   }
 
   function onKeyDown(event) {

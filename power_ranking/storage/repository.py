@@ -369,7 +369,9 @@ def load_data():
     )
     next_id = loaded_data.get("next_match_id")
 
-    if not is_plain_int(next_id) or next_id <= highest_id:
+    if not loaded_data["match_records"]:
+        loaded_data["next_match_id"] = 1
+    elif not is_plain_int(next_id) or next_id <= highest_id:
         loaded_data["next_match_id"] = highest_id + 1
 
     # Older files stored a full ranking snapshot in every history entry.

@@ -34,6 +34,9 @@
     const savedDrinks = (shop?.menu || []).filter(
       item => item.category === "drink"
     );
+    const savedFoods = (shop?.menu || []).filter(
+      item => item.category === "food"
+    );
     const savedToppings = (shop?.menu || []).filter(
       item => item.category === "topping"
     );
@@ -186,11 +189,14 @@
                       <select name="menu-category" aria-label="Menu item type" ${canManage ? "" : "disabled"}>
                         <option value="drink" ${item.category === "drink" ? "selected" : ""}>Drink</option>
                         <option value="topping" ${item.category === "topping" ? "selected" : ""}>Topping</option>
+                        <option value="food" ${item.category === "food" ? "selected" : ""}>Foods</option>
                       </select>
                     </td>
                     ${["S", "M", "L"].map(size => `
-                      <td><input name="price-${size}" type="number" min="0" max="1000000" ${canManage ? "" : "disabled"}
-                        step="1" value="${item.prices[size] ?? ""}" aria-label="${size} price in thousands"></td>
+                      <td><input name="price-${size}" type="number" min="0" max="1000000"
+                        ${canManage && !(item.category === "topping" && size !== "S") ? "" : "disabled"}
+                        step="1" value="${item.prices[size] ?? ""}"
+                        aria-label="${size === "S" && item.category === "topping" ? "Price" : size + " price"} in thousands"></td>
                     `).join("")}
                     <td>${canManage ? `<button type="button" class="danger" data-action="remove-drink-menu-item"
                       data-menu-item-id="${escapeHtml(item.id)}">Remove</button>` : ""}</td>
@@ -200,7 +206,7 @@
             </table>
           </div>
           <div class="form-actions">
-            ${canManage ? `<button type="submit" class="primary">Save menu</button>` : ""}
+            ${canManage ? `<button type="submit" class="primary ${drinkMenuIsDirty() ? "needs-save" : ""}">Save menu</button>` : ""}
           </div>
         </form>
         ` : `<p class="muted">Add a shop to start creating its menu.</p>`}
@@ -208,7 +214,7 @@
 
       <section class="panel">
         <h2>Add an order</h2>
-        ${shop && savedDrinks.length && canManage ? `
+        ${shop && (savedDrinks.length || savedFoods.length || savedToppings.length) && canManage ? `
           <form id="drink-order-form">
             <div class="form-grid">
               <div class="field">
@@ -218,17 +224,33 @@
               <div class="field">
                 <label for="drink-item">Item</label>
                 <select id="drink-item" name="item_id" required>
-                  ${savedDrinks.map((item, index) => `
-                    <option value="${escapeHtml(item.id)}" ${index === 0 ? "selected" : ""}>
-                      ${escapeHtml(item.name)}
-                    </option>
-                  `).join("")}
+                  <optgroup label="Drinks">
+                    ${savedDrinks.map((item, index) => `
+                      <option value="${escapeHtml(item.id)}" ${index === 0 ? "selected" : ""}>
+                        ${escapeHtml(item.name)}
+                      </option>
+                    `).join("")}
+                  </optgroup>
+                  ${savedFoods.length ? `<optgroup label="Foods">
+                    ${savedFoods.map((item, index) => `
+                      <option value="${escapeHtml(item.id)}" ${!savedDrinks.length && index === 0 ? "selected" : ""}>
+                        ${escapeHtml(item.name)}
+                      </option>
+                    `).join("")}
+                  </optgroup>` : ""}
+                  ${savedToppings.length ? `<optgroup label="Toppings only">
+                    ${savedToppings.map((item, index) => `
+                      <option value="${escapeHtml(item.id)}" ${!savedDrinks.length && !savedFoods.length && index === 0 ? "selected" : ""}>
+                        ${escapeHtml(item.name)}
+                      </option>
+                    `).join("")}
+                  </optgroup>` : ""}
                 </select>
               </div>
-              <div class="field">
+              <div class="field" id="drink-size-field" ${savedDrinks.length || savedFoods.length ? "" : "hidden"}>
                 <label for="drink-size">Size</label>
                 <select id="drink-size" name="size" required>
-                  ${drinkSizeOptions(savedDrinks[0])}
+                  ${drinkSizeOptions(savedDrinks[0] || savedFoods[0] || savedToppings[0])}
                 </select>
               </div>
               <div class="field">
@@ -238,15 +260,16 @@
               </div>
             </div>
             ${savedToppings.length ? `
-              <div class="field" style="margin-top:12px">
-                <label for="drink-toppings">Toppings / add-ons (hold Ctrl to select multiple)</label>
-                <select id="drink-toppings" name="topping_ids" multiple size="${Math.min(toppings.length, 6)}">
+              <div class="field" id="drink-toppings-field" style="margin-top:12px" ${savedDrinks.length ? "" : "hidden"}>
+                <span class="field-label">Toppings / add-ons</span>
+                <div class="topping-options">
                   ${savedToppings.map(item => `
-                    <option value="${escapeHtml(item.id)}">
-                      ${escapeHtml(item.name)} (+${formatDrinkMoney(Number(item.prices.S ?? item.prices.M ?? item.prices.L) || 0)})
-                    </option>
+                    <label class="topping-option">
+                      <input type="checkbox" name="topping_ids" value="${escapeHtml(item.id)}">
+                      <span>${escapeHtml(item.name)} (+${formatDrinkMoney(Number(item.prices.S ?? item.prices.M ?? item.prices.L) || 0)})</span>
+                    </label>
                   `).join("")}
-                </select>
+                </div>
               </div>
             ` : ""}
             <div class="form-actions">
@@ -405,24 +428,40 @@
           ${draft.teams.map((team, index) => `
             <fieldset class="drink-settlement-team" data-team-index="${index}"
               ${index >= draft.teamCount ? "hidden disabled" : ""}>
-              <legend>Team ${index + 1}</legend>
-              <div class="form-grid">
+              <legend>
+                <span class="team-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24"><path d="M16 11a3 3 0 1 0-3-3 3 3 0 0 0 3 3Zm-8 0a3 3 0 1 0-3-3 3 3 0 0 0 3 3Zm0 2c-2.3 0-7 1.2-7 3.5V19h14v-2.5C15 14.2 10.3 13 8 13Zm8 0c-.3 0-.6 0-1 .1a4.2 4.2 0 0 1 2 3.4V19h6v-2.5c0-2.3-4.700-3.500-7-3.500Z"/></svg>
+                </span>
+                Team ${index + 1}
+              </legend>
+              <div class="team-main">
                 <div class="field">
-                  <label for="settlement-team-percentage-${index}">Share of D (%)</label>
-                  <input id="settlement-team-percentage-${index}" name="team_percentage_${index}"
-                    type="number" min="0" max="100" step="0.01"
-                    value="${escapeHtml(team.percentage)}" required>
+                  <label for="settlement-team-percentage-${index}">Percentage (%)</label>
+                  <div class="team-percentage">
+                    <input id="settlement-team-percentage-${index}" name="team_percentage_${index}"
+                      type="number" min="0" max="100" step="0.01"
+                      value="${escapeHtml(team.percentage)}" required>
+                    <span>%</span>
+                  </div>
                 </div>
                 <div class="field">
-                  <label>People with orders</label>
+                  <label class="team-label">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4Zm0 2c-3.300 0-8 1.700-8 5v1h16v-1c0-3.300-4.700-5-8-5Z"/></svg>
+                    People with orders
+                  </label>
                   ${assignmentPicker(`team-${index}`)}
                   <div class="drink-settlement-assigned-list">
                     ${assignedPeopleList(team.orderedMembers, `team-${index}`)}
                   </div>
-                  <label for="settlement-team-extra-${index}">Additional members who did not order</label>
-                  <textarea id="settlement-team-extra-${index}" name="team_extra_members_${index}"
-                    rows="2">${escapeHtml(team.extraMembers)}</textarea>
                 </div>
+              </div>
+              <div class="field team-extra">
+                <label class="team-label" for="settlement-team-extra-${index}">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4Zm0 2c-3 0-7 1.500-7 4.500V20h14v-1.500C16 15.500 12 14 9 14Zm9-6V5h-2v3h-3v2h3v3h2v-3h3V8Z"/></svg>
+                  Additional members who did not order
+                </label>
+                <textarea id="settlement-team-extra-${index}" name="team_extra_members_${index}"
+                  rows="2" placeholder="Enter names (optional)...">${escapeHtml(team.extraMembers)}</textarea>
               </div>
             </fieldset>
           `).join("")}
@@ -661,7 +700,7 @@
         if (!person) throw new Error("Every order must have a person's name.");
         return {
           person,
-          product: `${drink.name} (${order.size})${toppings.length
+          product: `${drink.name}${drink.category === "topping" ? "" : ` (${order.size})`}${toppings.length
             ? ` + ${toppings.map(item => item.name).join(", ")}`
             : ""}`,
           quantity,
@@ -702,7 +741,17 @@
         || !Number.isSafeInteger(percentagePoints) || percentagePoints !== percentage * 100) {
         throw new Error(`Team ${index + 1} percentage must be from 0 to 100 with at most 2 decimal places.`);
       }
-      const members = [...team.orderedMembers, ...splitSettlementNames(team.extraMembers)];
+      const extraMembers = splitSettlementNames(team.extraMembers);
+      const orderedNames = new Set(orderLines.map(line => line.person.toLocaleLowerCase("vi")));
+      const extraWhoOrdered = extraMembers.find(
+        name => orderedNames.has(name.toLocaleLowerCase("vi"))
+      );
+      if (extraWhoOrdered) {
+        throw new Error(
+          `${extraWhoOrdered} already ordered, so they cannot be listed under members who did not order (Team ${index + 1}).`
+        );
+      }
+      const members = [...team.orderedMembers, ...extraMembers];
       if (!members.length && percentage > 0) {
         throw new Error(`Enter at least one member for Team ${index + 1} with a non-zero percentage.`);
       }
@@ -1086,12 +1135,42 @@
     return allocations.map(Number);
   }
 
+  function drinkMenuSignature(menu) {
+    return JSON.stringify(menu.map(item => [
+      item.id,
+      String(item.name || "").trim(),
+      item.category,
+      ["S", "M", "L"].map(size => item.prices?.[size] ?? null)
+    ]));
+  }
+
+  function drinkMenuIsDirty(menu = drinkMenuDraft) {
+    const shop = state.drink_shop.shops.find(item => item.id === activeDrinkShopId);
+    return !!shop && Array.isArray(menu)
+      && drinkMenuSignature(menu) !== drinkMenuSignature(shop.menu);
+  }
+
+  function refreshDrinkMenuSaveState() {
+    const form = $("#drink-menu-form");
+    const button = form && $("button[type='submit']", form);
+    if (!button) return;
+    button.classList.toggle("needs-save", drinkMenuIsDirty(readDrinkMenuForm()));
+  }
+
+  function refreshDrinkOrderSubmitState() {
+    const form = $("#drink-order-form");
+    const button = form && $("button[type='submit']", form);
+    if (!button) return;
+    button.classList.toggle("needs-save", !!form.elements.person.value.trim());
+  }
+
   function readDrinkMenuForm() {
     return $$("tr[data-menu-item-id]", $("#drink-menu-form")).map(row => {
       const prices = {};
+      const isTopping = $("[name='menu-category']", row).value === "topping";
       for (const size of ["S", "M", "L"]) {
         const value = $(`[name="price-${size}"]`, row).value.trim();
-        prices[size] = value === "" ? null : Number(value);
+        prices[size] = value === "" || (isTopping && size !== "S") ? null : Number(value);
       }
       return {
         id: row.dataset.menuItemId,
@@ -1169,7 +1248,7 @@
           || typeof item.name !== "string"
           || !item.name.trim()
           || item.name.trim().length > 120
-          || !["drink", "topping"].includes(item.category)
+          || !["drink", "topping", "food"].includes(item.category)
           || !item.prices || typeof item.prices !== "object"
           || Array.isArray(item.prices)
         ) {
@@ -1226,8 +1305,10 @@
       }
 
       drinkMenuDraft = mergedMenu;
+      await saveDrinkShop(drinkShopsWithMenu(mergedMenu));
+      drinkSettlementResults.delete(activeDrinkShopId);
       showNotice(
-        `Menu imported: ${addedCount} added, ${updatedCount} updated. Review and save the menu.`
+        `Menu imported and saved: ${addedCount} added, ${updatedCount} updated.`
       );
       renderApp();
     } catch (error) {

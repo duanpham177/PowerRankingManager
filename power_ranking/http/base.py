@@ -150,6 +150,7 @@ class BaseHandler:
             "/js/features/history.js",
             "/js/features/players.js",
             "/js/features/users.js",
+            "/js/dialogs.js",
             "/js/events.js",
             "/js/form-events.js",
             "/js/click-events.js",
@@ -178,6 +179,7 @@ class BaseHandler:
             "js/features/history.js": "text/javascript; charset=utf-8",
             "js/features/players.js": "text/javascript; charset=utf-8",
             "js/features/users.js": "text/javascript; charset=utf-8",
+            "js/dialogs.js": "text/javascript; charset=utf-8",
             "js/events.js": "text/javascript; charset=utf-8",
             "js/form-events.js": "text/javascript; charset=utf-8",
             "js/click-events.js": "text/javascript; charset=utf-8",
@@ -257,6 +259,7 @@ class BaseHandler:
             "/api/admin/players": self.handle_add_player,
             "/api/admin/players/delete": self.handle_delete_player,
             "/api/admin/players/delete-bulk": self.handle_delete_players,
+            "/api/admin/players/import": self.handle_import_players,
         }
 
         if path == "/api/logout":

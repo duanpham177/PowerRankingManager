@@ -203,9 +203,10 @@
       : null;
   }
 
-  function renderRandomTeamOption(option) {
+  function renderRandomTeamOption(option, animate = false) {
     const container = $("#random-team-results");
     if (!container) return;
+    let memberIndex = 0;
 
     container.innerHTML = option ? `
       ${option.violation > 0 ? `
@@ -228,7 +229,7 @@
                 Number(a.tier) - Number(b.tier)
                 || a.name.localeCompare(b.name)
               ).map(player => `
-                <li>
+                <li${animate ? ` class="member-reveal" style="animation-delay:${Math.min(memberIndex++, 40) * 70}ms"` : ""}>
                   ${escapeHtml(player.name)}
                   <span class="muted small">(Tier ${player.tier})</span>
                 </li>

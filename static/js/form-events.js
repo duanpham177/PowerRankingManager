@@ -4,11 +4,15 @@
     const form = event.target;
     if (!(form instanceof HTMLFormElement) || form.id !== "match-form") return;
 
+    const summary = $("#match-result-summary");
+    summary?.classList.add("resetting");
+
     setTimeout(() => {
       if (!form.isConnected) return;
       buildTeamFields();
       applyPlayerSearch();
       updateMatchSummary();
+      setTimeout(() => summary?.classList.remove("resetting"), 50);
     }, 0);
   }
 
@@ -182,16 +186,41 @@
           throw new Error(`Assign at least one player to Rank ${emptyRank.rank}.`);
         }
 
-        await request("/matches", {
-          method: "POST",
-          body: {
-            date: form.elements.date.value,
-            team_count: count,
-            results
-          }
-        });
+        const saveButton = form.querySelector("button[type='submit']");
+        saveButton.classList.add("is-saving");
+        saveButton.disabled = true;
+        try {
+          await request("/matches", {
+            method: "POST",
+            body: {
+              date: form.elements.date.value,
+              team_count: count,
+              results
+            }
+          });
+        } catch (error) {
+          saveButton.classList.remove("is-saving");
+          saveButton.disabled = false;
+          throw error;
+        }
+        saveButton.classList.remove("is-saving");
+        saveButton.classList.add("is-saved");
+        saveButton.textContent = "Saved ✓";
+        await new Promise(resolve => setTimeout(resolve, 600));
+        const main = $("#main-content");
+        if (main) {
+          main.classList.add("tab-leave");
+          await new Promise(resolve => setTimeout(resolve, 220));
+        }
         showNotice("Match result saved.");
         await refreshState();
+        window.scrollTo({ top: 0, behavior: "smooth" });
+        const newMain = $("#main-content");
+        if (newMain) {
+          newMain.classList.remove("tab-leave");
+          newMain.classList.add("tab-enter");
+          newMain.addEventListener("animationend", () => newMain.classList.remove("tab-enter"), { once: true });
+        }
 
       } else if (form.id === "add-drink-shop-form") {
         const name = String(formObject(form).shop_name || "").trim();
@@ -230,6 +259,20 @@
         if (menu.some(item => !item.name)) {
           throw new Error("Enter a name for each menu item with a price.");
         }
+        const menuById = new Map(menu.map(item => [item.id, item]));
+        const conflicts = state.drink_shop.orders.filter(order => (
+          order.shop_id === activeDrinkShopId
+          && (!menuById.has(order.item_id)
+            || (menuById.get(order.item_id).category === "topping" && order.topping_ids.length)
+            || order.topping_ids.some(id => menuById.get(id)?.category !== "topping"))
+        ));
+        if (conflicts.length) {
+          const names = [...new Set(conflicts.map(order => order.person))].join(", ");
+          throw new Error(
+            "Cannot save: existing orders (" + names + ") use items whose type changed or were removed. "
+            + "Delete those orders first."
+          );
+        }
         await saveDrinkShop(drinkShopsWithMenu(menu));
         drinkSettlementResults.delete(activeDrinkShopId);
         showNotice("Drink menu saved.");
@@ -247,14 +290,20 @@
           throw new Error("Only Admin or Operator can add drink orders.");
         }
         const values = formObject(form);
-        const toppingIds = $$("[name='topping_ids'] option:checked", form)
-          .map(option => option.value);
+        const selectedItem = state.drink_shop.shops
+          .find(shop => shop.id === activeDrinkShopId)
+          ?.menu.find(item => item.id === values.item_id);
+        const toppingIds = selectedItem && selectedItem.category !== "drink"
+          ? []
+          :           $$("[name='topping_ids']:checked", form)
+                      .map(input => input.value);
+        const isToppingOrder = selectedItem?.category === "topping";
         const order = {
           id: state.drink_shop.next_order_id,
           person: String(values.person || "").trim(),
           shop_id: activeDrinkShopId,
           item_id: values.item_id,
-          size: values.size,
+          size: isToppingOrder ? "S" : values.size,
           quantity: Number(values.quantity),
           topping_ids: toppingIds
         };

@@ -75,7 +75,7 @@ class DrinkRoutes:
                     or not item_name.strip()
                     or len(item_name.strip()) > 120
                     or not isinstance(category, str)
-                    or category not in {"drink", "topping"}
+                    or category not in {"drink", "topping", "food"}
                     or not isinstance(prices, dict)
                 ):
                     self.send_error_json(
@@ -96,6 +96,12 @@ class DrinkRoutes:
                         )
                         return
                     normalized_prices[size] = price
+                if category == "topping":
+                    single_price = next(
+                        (p for p in normalized_prices.values() if p is not None),
+                        None,
+                    )
+                    normalized_prices = {"S": single_price, "M": None, "L": None}
                 if all(price is None for price in normalized_prices.values()):
                     self.send_error_json(
                         HTTPStatus.BAD_REQUEST,
@@ -154,13 +160,14 @@ class DrinkRoutes:
                 or order_shop is None
                 or not isinstance(item_id, str)
                 or item_id not in menu_by_id
-                or menu_by_id[item_id]["category"] != "drink"
                 or not isinstance(size, str)
                 or size not in {"S", "M", "L"}
+                or (menu_by_id[item_id]["category"] == "topping" and size != "S")
                 or menu_by_id[item_id]["prices"][size] is None
                 or not is_plain_int(quantity)
                 or not 1 <= quantity <= 100
                 or not isinstance(topping_ids, list)
+                or (menu_by_id[item_id]["category"] != "drink" and topping_ids)
             ):
                 self.send_error_json(
                     HTTPStatus.BAD_REQUEST,

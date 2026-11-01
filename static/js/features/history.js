@@ -28,7 +28,7 @@
         </div>
 
         ${history.length ? history.slice().reverse().map(m => `
-          <div class="team-box" style="margin-bottom:10px">
+          <div class="team-box history-match" style="margin-bottom:10px">
             <div class="toolbar">
               <strong>Match #${m.id ?? "?"}</strong>
               <div class="row-actions">
@@ -69,14 +69,15 @@
         </div>
 
         ${logs.length ? logs.slice().reverse().map(log => `
-          <div class="team-box" style="margin-bottom:10px">
+          <div class="team-box log-entry" style="margin-bottom:10px">
             <div class="toolbar">
               <strong>Match #${log.match_id ?? "?"}${log.rebuilt ? " · Rebuilt" : ""}</strong>
               <span class="muted small">${escapeHtml(log.date)} · ${log.team_count} ranks</span>
             </div>
             ${(log.events || []).length ? `
-              <details>
+              <details class="log-details">
                 <summary class="small muted">Show ${log.events.length} ranking change(s)</summary>
+                <div class="log-details-body">
                 <div style="margin-top:8px">
                   ${log.events.map(event => `
                     <div class="small" style="padding:5px 0">
@@ -87,6 +88,7 @@
                       ].filter(Boolean).join("; "))}</span>
                     </div>
                   `).join("")}
+                </div>
                 </div>
               </details>
             ` : `<div class="muted small">No ranking changes recorded.</div>`}

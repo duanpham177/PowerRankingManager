@@ -65,9 +65,9 @@
         </p>
 
         ${players.map(p => `
-          <div class="player-rank-row" data-player-row="${escapeHtml(p.name).toLowerCase()}">
+          <div class="player-rank-row ${Number(p.tier) === 1 ? 'tier-1-rank' : ''}" data-player-row="${escapeHtml(p.name).toLowerCase()}">
             <label style="margin:0">
-              <span class="player-rank-name">${escapeHtml(p.name)}</span>
+              ${Number(p.tier) === 1 ? '<span class="tier-1-crown" aria-hidden="true">👑</span>' : '<span class="player-icon" aria-hidden="true">⚽</span>'}<span class="player-rank-name">${escapeHtml(p.name)}</span>
               <span class="muted small">· Tier ${p.tier}</span>
             </label>
 
@@ -107,19 +107,68 @@
 
     const selectedPlayers = assignments.filter(item => item.rank !== "");
 
-    summary.innerHTML = Array.from({ length: count }, (_, i) => {
-      const rank = i + 1;
-      const members = selectedPlayers.filter(item => Number(item.rank) === rank);
+    // Rebuild only when the number of ranks changes; otherwise patch in place so chips can animate.
+    if (summary.children.length !== count || summary.dataset.count !== String(count)) {
+      summary.dataset.count = String(count);
+      summary.innerHTML = Array.from({ length: count }, (_, i) => {
+        const rank = i + 1;
+        return `
+          <div class="summary-rank${rank === 1 ? " first-place" : ""}">
+            <h3>${rank === 1 ? '<span class="rank-trophy" aria-label="First place">🏆</span>' : ""}Rank ${rank}</h3>
+          </div>
+        `;
+      }).join("");
+      for (const card of summary.children) {
+        card.insertAdjacentHTML("beforeend", `<span class="muted small summary-empty">No players assigned</span>`);
+      }
+    }
 
-      return `
-        <div class="summary-rank${rank === 1 ? " first-place" : ""}">
-          <h3>${rank === 1 ? '<span class="rank-trophy" aria-label="First place">🏆</span>' : ""}Rank ${rank}</h3>
-          ${members.length
-            ? members.map(item => `<span class="summary-player">${escapeHtml(item.name)}</span>`).join("")
-            : `<span class="muted small">No players assigned</span>`}
-        </div>
-      `;
-    }).join("");
+    Array.from(summary.children).forEach((card, i) => {
+      const rank = i + 1;
+      const names = selectedPlayers
+        .filter(item => Number(item.rank) === rank)
+        .map(item => item.name);
+      const chips = new Map(
+        Array.from(card.querySelectorAll(".summary-player:not(.leaving)"))
+          .map(el => [el.dataset.name, el])
+      );
+
+      let leaveIndex = 0;
+      for (const [name, el] of chips) {
+        if (names.includes(name)) continue;
+        const slow = summary.classList.contains("resetting");
+        const delay = slow ? Math.min(leaveIndex, 12) * 45 : 0;
+        const duration = slow ? 450 : 200;
+        leaveIndex += 1;
+        el.style.transitionDuration = `${duration}ms`;
+        el.style.transitionDelay = `${delay}ms`;
+        el.classList.add("leaving");
+        setTimeout(() => el.remove(), duration + delay);
+      }
+
+      let previous = card.querySelector("h3");
+      for (const name of names) {
+        let chip = chips.get(name);
+        if (!chip) {
+          chip = document.createElement("span");
+          chip.className = "summary-player chip-enter";
+          chip.dataset.name = name;
+          chip.textContent = name;
+          previous.after(chip);
+        }
+        previous = chip;
+      }
+
+      const empty = card.querySelector(".summary-empty");
+      if (names.length && empty) {
+        empty.remove();
+      } else if (!names.length && !empty) {
+        const placeholder = document.createElement("span");
+        placeholder.className = "muted small summary-empty chip-enter";
+        placeholder.textContent = "No players assigned";
+        card.append(placeholder);
+      }
+    });
   }
 
   function formObject(form) {

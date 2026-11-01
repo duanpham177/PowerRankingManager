@@ -636,10 +636,13 @@
 
         <div class="rank-cards">
           ${tierCounts.map((count, i) => `
-            <div class="rank-card">
-              <span>Tier ${i + 1}</span>
-              <b>${count}</b>
-              <span>player${count === 1 ? "" : "s"}</span>
+            <div class="rank-card rank-digital tier-dial-${i + 1}">
+              <span class="dial-label">Tier ${i + 1}</span>
+              <div class="lcd" aria-label="${count} player${count === 1 ? "" : "s"}">
+                <span class="lcd-ghost" aria-hidden="true">88</span>
+                <b>${String(count).padStart(2, "0")}</b>
+              </div>
+              <span class="dial-sub">player${count === 1 ? "" : "s"}</span>
             </div>
           `).join("")}
         </div>
@@ -655,14 +658,14 @@
             </thead>
             <tbody>
               ${players.length ? players.map((p, i) => `
-                <tr>
-                  <td>${i + 1}</td>
-                  <td><strong>${escapeHtml(p.name)}</strong></td>
-                  <td><span class="tier">Tier ${p.tier}</span></td>
-                  <td>${starsText(p.stars)} <span class="muted small">(${p.stars})</span></td>
-                  <td>${p.win_streak ?? 0}</td>
-                  <td>${p.play_streak ?? 0}</td>
-                  <td>${p.off_streak ?? 0}</td>
+                <tr class="${Number(p.tier) === 1 ? "tier-1-row" : ""}">
+                  <td><span class="rank-no rank-no-${i < 3 ? i + 1 : 0}">${i + 1}</span></td>
+                  <td><strong>${Number(p.tier) === 1 ? '<span class="tier-1-crown" aria-hidden="true">👑</span>' : ""}${escapeHtml(p.name)}</strong></td>
+                  <td><span class="tier ${Number(p.tier) === 1 ? "tier-1" : ""}">${Number(p.tier) === 1 ? "★ " : ""}Tier ${p.tier}</span></td>
+                  <td><span class="stars-cell">${starsText(p.stars)}<span class="stars-count">${p.stars}</span></span></td>
+                  <td><span class="streak-pill win ${(p.win_streak ?? 0) > 0 ? "on" : ""}">🔥 ${p.win_streak ?? 0}</span></td>
+                  <td><span class="streak-pill play ${(p.play_streak ?? 0) > 0 ? "on" : ""}">⚽ ${p.play_streak ?? 0}</span></td>
+                  <td><span class="streak-pill off ${(p.off_streak ?? 0) > 0 ? "on" : ""}">💤 ${p.off_streak ?? 0}</span></td>
                   ${roleIs("Admin") ? `
                     <td>
                       <div class="row-actions">

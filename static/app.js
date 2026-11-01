@@ -625,22 +625,103 @@
 
     .drink-settlement-teams {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-      gap: 12px;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px;
       margin: 14px 0;
+    }
+
+    @media (max-width: 760px) {
+      .drink-settlement-teams { grid-template-columns: minmax(0, 1fr); }
     }
 
     .drink-settlement-team {
       min-width: 0;
-      padding: 14px;
+      padding: 16px 18px 18px;
       border: 1px solid var(--line);
-      border-radius: 10px;
+      border-radius: 14px;
     }
 
     .drink-settlement-team legend {
-      padding: 0 6px;
+      float: left;
+      width: 100%;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 0 0 14px;
+      padding: 0 0 12px;
+      border-bottom: 1px solid var(--line);
       color: var(--text);
+      font-size: 18px;
       font-weight: 700;
+    }
+
+    .drink-settlement-team legend + * { clear: both; }
+
+    .team-icon {
+      display: grid;
+      place-items: center;
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      color: var(--accent);
+      background: var(--panel);
+      box-shadow:
+        inset 3px 3px 6px var(--inset-shadow-dark, #0003),
+        inset -3px -3px 6px var(--inset-shadow-light, #fff1);
+    }
+
+    .team-icon svg, .team-label svg {
+      width: 20px;
+      height: 20px;
+      fill: currentColor;
+    }
+
+    .team-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .team-label svg { color: var(--accent); flex: none; }
+
+    .team-main {
+      display: grid;
+      grid-template-columns: minmax(0, 120px) minmax(0, 1fr);
+      gap: 0 18px;
+      align-items: start;
+    }
+
+    .team-main > .field + .field {
+      padding-left: 18px;
+      border-left: 1px solid var(--line);
+    }
+
+    .team-percentage {
+      display: flex;
+      align-items: stretch;
+    }
+
+    .team-percentage input {
+      min-width: 0;
+      border-top-right-radius: 0;
+      border-bottom-right-radius: 0;
+    }
+
+    .team-percentage span {
+      display: grid;
+      place-items: center;
+      padding: 0 12px;
+      color: var(--muted);
+      font-weight: 600;
+      border-radius: 0 8px 8px 0;
+      background: var(--panel);
+    }
+
+    .team-extra { margin-top: 14px; }
+
+    @media (max-width: 420px) {
+      .team-main { grid-template-columns: minmax(0, 1fr); }
+      .team-main > .field + .field { padding-left: 0; border-left: 0; margin-top: 12px; }
     }
 
     .drink-settlement-assigned-list {

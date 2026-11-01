@@ -97,10 +97,18 @@ class HistoryRoutes:
                 if item != match_id
             ]
             prune_deleted_players(data)
+            previous_next_match_id = data["next_match_id"]
+            if not data["match_records"]:
+                data["next_match_id"] = 1
+                data["manual_ranking_edits"] = [
+                    {**edit, "after_match_id": 0}
+                    for edit in previous_manual_edits
+                ]
 
             try:
                 rebuild_ranking()
             except ValueError as exc:
+                data["next_match_id"] = previous_next_match_id
                 data["match_records"] = previous_records
                 data["hidden_match_ids"] = previous_hidden_ids
                 data["deleted_players"] = previous_deleted_players
@@ -146,13 +154,20 @@ class HistoryRoutes:
             previous_deleted_players = data["deleted_players"]
             previous_initial_players = data["initial_players"].copy()
             previous_manual_edits = data["manual_ranking_edits"]
+            previous_next_match_id = data["next_match_id"]
             data["match_records"] = []
             data["hidden_match_ids"] = []
+            data["next_match_id"] = 1
+            data["manual_ranking_edits"] = [
+                {**edit, "after_match_id": 0}
+                for edit in previous_manual_edits
+            ]
             prune_deleted_players(data)
 
             try:
                 rebuild_ranking()
             except ValueError as exc:
+                data["next_match_id"] = previous_next_match_id
                 data["match_records"] = previous_records
                 data["hidden_match_ids"] = previous_hidden_ids
                 data["deleted_players"] = previous_deleted_players

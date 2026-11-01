@@ -1,7 +1,14 @@
 "use strict";
 
   async function onChange(event) {
-    if (event.target.id === "drink-menu-import-file") {
+    if (event.target.form?.id === "drink-menu-form") {
+      refreshDrinkMenuSaveState();
+    }
+
+    if (event.target.id === "players-import-file") {
+      await importPlayersFile(event.target);
+
+    } else if (event.target.id === "drink-menu-import-file") {
       await importDrinkMenuFile(event.target);
 
     } else if (event.target.id === "theme-select") {
@@ -10,6 +17,15 @@
     } else if (event.target.id === "settlement-team-count") {
       const form = event.target.form;
       if (form) updateDrinkSettlementTeamFields(form);
+
+    } else if (event.target.matches("[name='menu-category']")) {
+      const row = event.target.closest("tr");
+      const isTopping = event.target.value === "topping";
+      for (const size of ["M", "L"]) {
+        const input = $(`[name="price-${size}"]`, row);
+        if (isTopping) input.value = "";
+        input.disabled = isTopping;
+      }
 
     } else if (event.target.matches("[name='item_id']")) {
       const activeShop = state.drink_shop.shops.find(
@@ -28,6 +44,11 @@
           : "";
         sizeSelect.innerHTML = drinkSizeOptions(item, selected);
       }
+      const toppingsField = $("#drink-toppings-field");
+      const isNoTopping = !!item && item.category !== "drink";
+      if (toppingsField && !row) toppingsField.hidden = isNoTopping;
+      const sizeField = $("#drink-size-field");
+      if (sizeField && !row) sizeField.hidden = item?.category === "topping";
 
     } else if (event.target.id === "random-select-all") {
       const inputs = $$("input[name='random-player']");
@@ -124,6 +145,12 @@
   }
 
   function onInput(event) {
+    if (event.target.form?.id === "drink-menu-form") {
+      refreshDrinkMenuSaveState();
+    } else if (event.target.form?.id === "drink-order-form") {
+      refreshDrinkOrderSubmitState();
+    }
+
     if (event.target.id === "drink-bill-preview-prefix") {
       updateDrinkBillPreview();
 

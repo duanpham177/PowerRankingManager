@@ -58,6 +58,127 @@ class PlayerRoutes:
         )
 
 
+    def handle_import_players(self, body):
+        """Add players from an export file. Existing names are skipped."""
+        admin = self.require_roles("Admin")
+
+        if admin is None:
+            return
+
+        items = body.get("players")
+        if not isinstance(items, list) or not items or len(items) > 500:
+            self.send_error_json(
+                HTTPStatus.BAD_REQUEST,
+                "Provide between 1 and 500 players to import.",
+            )
+            return
+
+        parsed = []
+        seen = set()
+        for index, item in enumerate(items, start=1):
+            name = item.get("name") if isinstance(item, dict) else None
+            if (
+                not isinstance(name, str)
+                or not name.strip()
+                or len(name.strip()) > 80
+            ):
+                self.send_error_json(
+                    HTTPStatus.BAD_REQUEST,
+                    f"Player {index} has an invalid name.",
+                )
+                return
+
+            name = name.strip()
+            if name in seen:
+                self.send_error_json(
+                    HTTPStatus.BAD_REQUEST,
+                    f"The file contains a duplicate player: {name}.",
+                )
+                return
+            seen.add(name)
+
+            try:
+                tier, stars = normalize_manual_edit(
+                    item.get("tier", 5), item.get("stars", 0)
+                )
+            except ValueError as exc:
+                self.send_error_json(
+                    HTTPStatus.BAD_REQUEST, f"Player {name}: {exc}"
+                )
+                return
+            parsed.append((name, tier, stars))
+
+        with DATA_LOCK:
+            added = 0
+            skipped = 0
+            updated = 0
+            overwrite = body.get("overwrite") is True
+            for name, tier, stars in parsed:
+                if name in data["players"]:
+                    if not overwrite:
+                        skipped += 1
+                        continue
+
+                    player = data["players"][name]
+                    player["tier"] = tier
+                    player["stars"] = stars
+                    after_match_id = max(
+                        [record["id"] for record in data["match_records"]]
+                        + [
+                            edit["after_match_id"]
+                            for edit in data["manual_ranking_edits"]
+                        ],
+                        default=0,
+                    )
+                    data["manual_ranking_edits"].append({
+                        "after_match_id": after_match_id,
+                        "player": name,
+                        "state": {
+                            field: player[field]
+                            for field in (
+                                "tier",
+                                "stars",
+                                "win_streak",
+                                "play_streak",
+                                "off_streak",
+                            )
+                        },
+                    })
+                    updated += 1
+                    continue
+
+                data["initial_players"][name] = {"tier": tier, "stars": stars}
+                data["players"][name] = {
+                    "tier": tier,
+                    "stars": stars,
+                    "win_streak": 0,
+                    "play_streak": 0,
+                    "off_streak": 0,
+                }
+                data["deleted_players"] = [
+                    deleted_name
+                    for deleted_name in data["deleted_players"]
+                    if deleted_name != name
+                ]
+                added += 1
+
+            if added or updated:
+                save_data()
+
+        self.send_json(
+            HTTPStatus.OK,
+            {
+                "message": (
+                    f"Imported {added} new player(s); "
+                    f"{updated} overwritten; {skipped} existing skipped."
+                ),
+                "added": added,
+                "updated": updated,
+                "skipped": skipped,
+            },
+        )
+
+
     def handle_delete_player(self, body):
         """Remove a player from the active roster without changing history or logs."""
         admin = self.require_roles("Admin")

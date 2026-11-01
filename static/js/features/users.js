@@ -189,7 +189,7 @@
           aria-modal="true" aria-labelledby="edit-player-title">
 
           <h2 id="edit-player-title">Edit player</h2>
-          <p class="muted">${escapeHtml(player.name)}</p>
+          <p class="muted player-name-line"><span class="player-icon" aria-hidden="true">⚽</span>${escapeHtml(player.name)}</p>
 
           <form id="edit-player-form" data-name="${escapeHtml(player.name)}">
             <div class="form-grid">
