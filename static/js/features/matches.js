@@ -38,17 +38,18 @@
             <input id="player-search" type="search" placeholder="Type a player name...">
           </div>
 
-          <div id="team-fields" style="margin-top:16px"></div>
+          <div class="match-split">
+          <div id="team-fields"></div>
 
-          <section class="team-box" style="margin-top:16px">
+          <section class="team-box match-summary-box">
             <h2 title="Updates when player ranks change."
               style="margin-bottom:14px">Match Result Summary</h2>
             <div id="match-result-summary"></div>
-          </section>
-
-          <div class="form-actions">
+            <div class="form-actions">
             <button class="primary" type="submit">Save match result</button>
             <button type="reset">Reset form</button>
+          </div>
+          </section>
           </div>
         </form>
       </section>

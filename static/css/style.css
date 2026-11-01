@@ -718,3 +718,82 @@ tr.tier-1-row td:first-child { box-shadow: inset 4px 0 0 #f2b01e; }
 .stars-count { min-width: 22px; text-align: center; }
 
 .stars-cell { grid-template-columns: 3.6em auto; column-gap: 6px; }
+
+/* Settlement person picker: distinct from surrounding panels */
+:root .drink-settlement-picker-toggle {
+  position: relative; text-align: left; padding-right: 36px;
+  background: rgba(110,90,220,.12) !important;
+  border: 1.5px solid var(--accent) !important;
+  color: var(--text);
+}
+:root .drink-settlement-picker-toggle::after {
+  content: ""; position: absolute; right: 16px; top: 50%;
+  width: 7px; height: 7px; margin-top: -6px;
+  border-right: 2px solid var(--accent); border-bottom: 2px solid var(--accent);
+  transform: rotate(45deg); transition: transform .2s ease;
+}
+:root .drink-settlement-picker.is-open .drink-settlement-picker-toggle::after { transform: rotate(-135deg); margin-top: -2px; }
+:root .drink-settlement-picker-options {
+  background: var(--panel) !important;
+  border: 1.5px dashed var(--accent) !important;
+  border-radius: 12px;
+}
+:root .drink-settlement-picker-options > button {
+  background: transparent !important; box-shadow: none !important;
+  border-radius: 8px; text-align: left;
+}
+:root .drink-settlement-picker-options > button:hover {
+  background: var(--accent) !important; color: var(--on-accent) !important;
+}
+
+/* Picker scrollbar: slim, rounded, no arrows */
+:root .drink-settlement-picker-options {
+  border-radius: 14px !important;
+  padding: 6px !important;
+}
+:root .drink-settlement-picker-options::-webkit-scrollbar { width: 8px; }
+:root .drink-settlement-picker-options::-webkit-scrollbar-track { background: transparent; margin: 8px 0; }
+:root .drink-settlement-picker-options::-webkit-scrollbar-thumb {
+  background: rgba(110,90,220,.5); border-radius: 999px;
+  border: 2px solid transparent; background-clip: padding-box;
+}
+:root .drink-settlement-picker-options::-webkit-scrollbar-thumb:hover { background: rgba(110,90,220,.8); background-clip: padding-box; }
+:root .drink-settlement-picker-options::-webkit-scrollbar-button { display: none; width: 0; height: 0; }
+:root .drink-settlement-picker-options::-webkit-scrollbar-corner { background: transparent; }
+
+/* Global scrollbars: slim, rounded, no arrow buttons */
+
+*::-webkit-scrollbar { width: 10px; height: 10px; }
+*::-webkit-scrollbar-track { background: transparent; }
+*::-webkit-scrollbar-thumb {
+  background: rgba(110,90,220,.5); border-radius: 999px;
+  border: 2px solid transparent; background-clip: padding-box;
+}
+*::-webkit-scrollbar-thumb:hover { background: rgba(110,90,220,.8); background-clip: padding-box; }
+*::-webkit-scrollbar-button, *::-webkit-scrollbar-button:single-button { display: none; width: 0; height: 0; }
+*::-webkit-scrollbar-corner { background: transparent; }
+
+html::-webkit-scrollbar, body::-webkit-scrollbar, :root *::-webkit-scrollbar { width: 10px; height: 10px; }
+html::-webkit-scrollbar-track, body::-webkit-scrollbar-track, :root *::-webkit-scrollbar-track { background: transparent; }
+html::-webkit-scrollbar-thumb, body::-webkit-scrollbar-thumb, :root *::-webkit-scrollbar-thumb {
+  background: rgba(110,90,220,.5); border-radius: 999px;
+  border: 2px solid transparent; background-clip: padding-box;
+}
+html::-webkit-scrollbar-thumb:hover, body::-webkit-scrollbar-thumb:hover, :root *::-webkit-scrollbar-thumb:hover { background: rgba(110,90,220,.8); background-clip: padding-box; }
+html::-webkit-scrollbar-button, body::-webkit-scrollbar-button, :root *::-webkit-scrollbar-button { display: none; width: 0; height: 0; }
+
+/* Record match: assign ranks and summary side by side */
+.match-split {
+  display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  gap: 16px; align-items: start; margin-top: 16px;
+}
+.match-split .match-summary-box {
+  position: sticky; top: 16px; margin-top: 0 !important;
+  max-height: calc(100vh - 32px); overflow: auto;
+}
+@media (max-width: 900px) {
+  .match-split { grid-template-columns: 1fr; }
+  .match-split .match-summary-box { position: static; max-height: none; }
+}
+
+.match-summary-box .form-actions { margin-top: 16px; padding-top: 14px; border-top: 1px solid rgba(120,120,160,.2); }

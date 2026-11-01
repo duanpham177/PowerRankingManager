@@ -206,21 +206,29 @@
         saveButton.classList.remove("is-saving");
         saveButton.classList.add("is-saved");
         saveButton.textContent = "Saved ✓";
-        await new Promise(resolve => setTimeout(resolve, 600));
-        const main = $("#main-content");
-        if (main) {
-          main.classList.add("tab-leave");
-          await new Promise(resolve => setTimeout(resolve, 220));
-        }
         showNotice("Match result saved.");
+        await new Promise(resolve => setTimeout(resolve, 600));
         await refreshState();
-        window.scrollTo({ top: 0, behavior: "smooth" });
-        const newMain = $("#main-content");
-        if (newMain) {
-          newMain.classList.remove("tab-leave");
-          newMain.classList.add("tab-enter");
-          newMain.addEventListener("animationend", () => newMain.classList.remove("tab-enter"), { once: true });
-        }
+        await new Promise(resolve => {
+          const startY = window.scrollY;
+          if (startY <= 0) return resolve();
+          const root = document.documentElement;
+          const duration = Math.min(1600, Math.max(700, startY * 0.6));
+          const t0 = performance.now();
+          root.style.scrollBehavior = "auto";
+          const step = now => {
+            const p = Math.min((now - t0) / duration, 1);
+            const eased = -(Math.cos(Math.PI * p) - 1) / 2;
+            window.scrollTo(0, startY * (1 - eased));
+            if (p < 1) {
+              requestAnimationFrame(step);
+            } else {
+              root.style.scrollBehavior = "";
+              resolve();
+            }
+          };
+          requestAnimationFrame(step);
+        });
 
       } else if (form.id === "add-drink-shop-form") {
         const name = String(formObject(form).shop_name || "").trim();
